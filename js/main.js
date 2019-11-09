@@ -64,6 +64,7 @@ const Question = {
       body: JSON.stringify(params)
     }).then(res => res.json());
   }
+  // 1. Add Delete method
 };
 
 // Testing in browser
@@ -143,6 +144,11 @@ function renderQuestionDetails(question) {
     }" href="">
     Edit
     </a>
+    <a class='delete' data-target="question-index" data-id="${
+      question.id
+    }" href="">
+    Delete
+    </a>
     <h3>Answers</h3>
     <ul>
         ${question.answers.map(a => `<li>${a.body}</li>`).join("")}
@@ -166,6 +172,16 @@ function getAndDisplayQuestion(id) {
   });
 }
 
+// Populate edit form with question title and body
+function populateForm(id) {
+  Question.one(id).then(question => {
+    document.querySelector("#edit-question-form [name=title]").value =
+      question.title;
+    document.querySelector("#edit-question-form [name=body]").value =
+      question.body;
+    document.querySelector("#edit-question-form [name=id]").value = question.id;
+  });
+}
 // Navigation
 function navigateTo(id, clickedLink) {
   if (id === "question-index") {
@@ -228,4 +244,39 @@ document.addEventListener("DOMContentLoaded", () => {
       getAndDisplayQuestion(question.id);
     });
   });
+
+  // Do navigation and populate edit form
+  document.querySelector("#question-show").addEventListener("click", event => {
+    debugger;
+    const link = event.target.closest("[data-target]");
+    if (link) {
+      event.preventDefault();
+      populateForm(link.getAttribute("data-id"));
+      const targetPage = link.getAttribute("data-target");
+      navigateTo(targetPage);
+    }
+  });
+
+  // Edit a question action
+  const editQuestionForm = document.querySelector("#edit-question-form");
+  editQuestionForm.addEventListener("submit", event => {
+    event.preventDefault();
+
+    const fd = new FormData(event.currentTarget);
+    const updatedQuestion = {
+      title: fd.get("title"),
+      body: fd.get("body")
+    };
+    Question.update(fd.get("id"), updatedQuestion).then(question => {
+      // clear form
+      editQuestionForm.reset();
+      // And display it
+      getAndDisplayQuestion(question.id);
+    });
+  });
+  // Delete
+  // 2. Capture delete click event handler
+  // 3. get the id of the question to delete
+  // 4. send a delete request to backend
+  // 5. Navigate back to the list of questions
 });
